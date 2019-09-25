@@ -8,8 +8,6 @@ To help myself with this task, I'm building a **microBrew** suite that will help
 
 This project contains the source code and the circuit diagram for the heating/cooling controller built using WeMos D1 mini (ESP8266).
 
-<<<<<<< HEAD
-=======
 ## Hardware
 Currently, controler uses WeMos D1 Mini development board and DS18B20 waterproof temperature sensor used for taking temperature readings. It's powered by a single 18650 Li-Ion battery connected to the controller using a battery shield.
 
@@ -38,7 +36,6 @@ const uint16_t port = 52100;
 
 
 
->>>>>>> a9682fe... Updated README.md
 <!-- 
 
 ## Installing / Getting started
