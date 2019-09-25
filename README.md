@@ -8,6 +8,37 @@ To help myself with this task, I'm building a **microBrew** suite that will help
 
 This project contains the source code and the circuit diagram for the heating/cooling controller built using WeMos D1 mini (ESP8266).
 
+<<<<<<< HEAD
+=======
+## Hardware
+Currently, controler uses WeMos D1 Mini development board and DS18B20 waterproof temperature sensor used for taking temperature readings. It's powered by a single 18650 Li-Ion battery connected to the controller using a battery shield.
+
+![controller](doc/controller.jpg)
+
+## Configuration
+
+Configuration is pretty straight forward. You just need to provide wifi credentials and microBrew-server hostname and port on top of the `app.ino` file.
+
+```c++
+// Populate wifi credentials
+const char *ssid = "$$$$";
+const char *psk = "$$$$";
+
+// Populate server details
+const char *host = "$$$$";
+const uint16_t port = 52100;
+
+```
+
+# Future development
+
+- [ ] Add second sensor to measure ambient temperature
+- [ ] Add relay to control switching of heating element
+- [ ] Add relay to control cooling fridge
+
+
+
+>>>>>>> a9682fe... Updated README.md
 <!-- 
 
 ## Installing / Getting started
