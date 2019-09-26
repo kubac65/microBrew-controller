@@ -2,7 +2,7 @@
 # microBrew-controller
 > Homebrew done the smart way
 
-Brewing beer at home is a really cool hobby. Sometimes, it can be a bit tedious, but nothing can compete with the taste of the beer that you brewed yourself. \
+Brewing beer at home is a really cool hobby. Sometimes, it can be a bit tedious, but nothing can compete with the taste of the beer that you brewed yourself.
 
 To help myself with this task, I'm building a **microBrew** suite that will help me to automate some of the tasks, and hopefully make the whole process a bit easier.
 
@@ -36,7 +36,7 @@ const uint16_t port = 52100;
 
 
 
-<!-- 
+<!--
 
 ## Installing / Getting started
 
@@ -107,7 +107,7 @@ Here you should write what are all of the configurations a user can enter when
 using the project.
 
 #### Argument 1
-Type: `String`  
+Type: `String`
 Default: `'default value'`
 
 State what an argument does and how you can use it. If needed, you can provide
@@ -119,7 +119,7 @@ awesome-project "Some other value"  # Prints "You're nailing this readme!"
 ```
 
 #### Argument 2
-Type: `Number|Boolean`  
+Type: `Number|Boolean`
 Default: 100
 
 Copy-paste as many of these as you need.
