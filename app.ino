@@ -4,7 +4,6 @@
 #include <DallasTemperature.h>
 #include <EEPROM.h>
 
-#define RESPONSE_SIZE 16
 #define BREW_RECORD_ADDRESS 0
 
 struct brewRecord_t
@@ -12,7 +11,7 @@ struct brewRecord_t
     uint32_t brewId;
     float minTemp;
     float maxTemp;
-} ;
+};
 
 struct request_t
 {
@@ -26,10 +25,10 @@ struct request_t
 struct response_t
 {
     uint32_t brewId;
-    bool heaterState;
-    bool coolerState;
     float minTemp;
     float maxTemp;
+    bool heaterState;
+    bool coolerState;
 };
 
 // Populate wifi credentials
@@ -44,8 +43,12 @@ const int oneWireGpio = 2;
 OneWire oneWire(oneWireGpio);
 DallasTemperature sensors(&oneWire);
 
-bool heaterState = false;
 WiFiClient client;
+
+brewRecord_t record;
+
+const uint8_t heaterRelay = 5;
+const uint8_t coolerRelay = 4;
 
 void setup()
 {
@@ -62,9 +65,16 @@ void setup()
         Serial.println("Waiting for wifi connection");
     }
 
+    // Initialize oneWire library
     sensors.begin();
 
+    // Initialize eeprom
     EEPROM.begin(512);
+    EEPROM.get(BREW_RECORD_ADDRESS, record);
+
+    // Initialize mins responsible for controlling heater and cooler relays
+    pinMode(heaterRelay, OUTPUT);
+    pinMode(coolerRelay, OUTPUT);
 }
 
 void loop()
@@ -76,28 +86,31 @@ void loop()
     Serial.printf("Beer temp: %.2fºC\n", beerTemp);
     Serial.printf("Ambient temp: %.2fºC\n", ambientTemp);
 
-    // client.setNoDelay(true);
     if (!client.connect(host, port))
     {
         Serial.println("Connection to server failed");
+        manualControl(beerTemp);
         return;
     }
 
     sendTemp(beerTemp, ambientTemp);
-    receiveResponse();
+    handleResponse();
 
     client.stop();
     delay(5000);
 }
 
-float sendTemp(float beerTemp, float ambientTemp)
+void sendTemp(float beerTemp, float ambientTemp)
 {
+    bool heaterState = digitalRead(heaterRelay);
+    bool coolerState = digitalRead(coolerRelay);
+
     struct request_t msg;
     msg.brewId = 1;
     msg.beerTemp = beerTemp;
     msg.ambientTemp = ambientTemp;
     msg.heaterState = heaterState;
-    msg.coolerState = false;
+    msg.coolerState = coolerState;
 
     byte *ptr_msg = (byte *)&msg;
     for (uint i = 0; i < sizeof(struct request_t); i++)
@@ -106,15 +119,15 @@ float sendTemp(float beerTemp, float ambientTemp)
     }
 }
 
-void receiveResponse()
+void handleResponse()
 {
-    byte msgBuffer[RESPONSE_SIZE];
-    client.readBytes(msgBuffer, RESPONSE_SIZE);
+    int responseSize = sizeof(struct request_t);
+    byte msgBuffer[responseSize];
+    client.readBytes(msgBuffer, responseSize);
 
     response_t *msg = (response_t *)msgBuffer;
-    brewRecord_t record;
 
-    EEPROM.get(BREW_RECORD_ADDRESS, record);
+    // Update the brew id and temp range and persist it in the eeprom, if any of the values changed
     if (msg->brewId != record.brewId || msg->minTemp != record.minTemp || msg->maxTemp != record.maxTemp)
     {
         record.brewId = msg->brewId;
@@ -125,4 +138,32 @@ void receiveResponse()
         EEPROM.commit();
         Serial.println("Record commited");
     }
+
+    digitalWrite(heaterRelay, msg->heaterState);
+    digitalWrite(coolerRelay, msg->coolerState);
+}
+
+void manualControl(float currentTemp)
+{
+    // In case when we can't connect to the server we have to control the heater and cooler
+    // based on current tempertarure and persisted min and max
+    float minTemp = record.minTemp;
+    float maxTemp = record.maxTemp;
+
+    float targetTemp = maxTemp - minTemp;
+    if (currentTemp <= minTemp && currentTemp < targetTemp)
+    {
+        digitalWrite(heaterRelay, HIGH);
+        digitalWrite(coolerRelay, LOW);
+        return;
+    }
+    else if (currentTemp > maxTemp)
+    {
+        digitalWrite(coolerRelay, HIGH);
+        digitalWrite(heaterRelay, LOW);
+        return;
+    }
+
+    digitalWrite(coolerRelay, LOW);
+    digitalWrite(heaterRelay, LOW);
 }
