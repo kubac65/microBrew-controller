@@ -28,13 +28,6 @@ const uint16_t port = 52100;
 
 ```
 
-# Future development
-
-- [ ] Add second sensor to measure ambient temperature
-- [ ] Add relay to control switching of heating element
-- [ ] Add relay to control cooling fridge
-
-
 
 <!--
 
