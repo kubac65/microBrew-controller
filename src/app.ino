@@ -74,14 +74,18 @@ void setup()
 
     // Initialize mins responsible for controlling heater and cooler relays
     pinMode(heaterRelay, OUTPUT);
+    digitalWrite(heaterRelay, LOW);
     pinMode(coolerRelay, OUTPUT);
+    digitalWrite(coolerRelay, LOW);
 }
 
 void loop()
 {
     sensors.requestTemperatures();
     float beerTemp = sensors.getTempCByIndex(0);
-    float ambientTemp = -99.9; //sensors.getTempCByIndex(1);
+    float ambientTemp = sensors.getTempCByIndex(1);
+    bool heaterState = digitalRead(heaterRelay);
+    bool coolerState = digitalRead(coolerRelay);
 
     Serial.printf("Beer temp: %.2fºC\n", beerTemp);
     Serial.printf("Ambient temp: %.2fºC\n", ambientTemp);
@@ -93,18 +97,15 @@ void loop()
         return;
     }
 
-    sendTemp(beerTemp, ambientTemp);
+    sendTemp(beerTemp, ambientTemp, heaterState, coolerState);
     handleResponse();
 
     client.stop();
     delay(5000);
 }
 
-void sendTemp(float beerTemp, float ambientTemp)
+void sendTemp(float beerTemp, float ambientTemp, bool heaterState, bool coolerState)
 {
-    bool heaterState = digitalRead(heaterRelay);
-    bool coolerState = digitalRead(coolerRelay);
-
     struct request_t msg;
     msg.brewId = 1;
     msg.beerTemp = beerTemp;
