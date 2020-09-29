@@ -3,6 +3,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <EEPROM.h>
+#include <LiquidCrystal_I2C.h>
 
 #define BREW_RECORD_ADDRESS 0
 
@@ -43,15 +44,26 @@ const int oneWireGpio = 2;
 OneWire oneWire(oneWireGpio);
 DallasTemperature sensors(&oneWire);
 
+// Setup LCD
+#define I2C_ADDR 0x27
+#define WIFI_MESSAGE "Waiting for wifi"
+LiquidCrystal_I2C lcd(I2C_ADDR, 16, 2);
+
 WiFiClient client;
 
 brewRecord_t record;
 
-const uint8_t heaterRelay = 5;
-const uint8_t coolerRelay = 4;
+const uint8_t heaterRelay = 15;
+const uint8_t coolerRelay = 13;
 
 void setup()
 {
+    // Initialize LCD display
+    lcd.init();
+    lcd.backlight();
+    lcd.clear();
+    lcd.print(WIFI_MESSAGE);
+
     // Start serial output for logging
     Serial.begin(115200);
 
@@ -62,17 +74,17 @@ void setup()
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(1000);
-        Serial.println("Waiting for wifi connection");
+        Serial.println(WIFI_MESSAGE);
     }
 
-    // Initialize oneWire library
+    lcd.clear();
     sensors.begin();
 
-    // Initialize eeprom
+    // Initialize eeprom and retrieve stored record
     EEPROM.begin(512);
     EEPROM.get(BREW_RECORD_ADDRESS, record);
 
-    // Initialize mins responsible for controlling heater and cooler relays
+    // Initialize pins responsible for controlling heater and cooler relays
     pinMode(heaterRelay, OUTPUT);
     digitalWrite(heaterRelay, LOW);
     pinMode(coolerRelay, OUTPUT);
@@ -87,9 +99,7 @@ void loop()
     bool heaterState = digitalRead(heaterRelay);
     bool coolerState = digitalRead(coolerRelay);
 
-    Serial.printf("Beer temp: %.2fºC\n", beerTemp);
-    Serial.printf("Ambient temp: %.2fºC\n", ambientTemp);
-
+    printTemps(beerTemp, ambientTemp);
     if (!client.connect(host, port))
     {
         Serial.println("Connection to server failed");
@@ -167,4 +177,15 @@ void manualControl(float currentTemp)
 
     digitalWrite(coolerRelay, LOW);
     digitalWrite(heaterRelay, LOW);
+}
+
+void printTemps(float beerTemp, float ambientTemp)
+{
+    Serial.printf("Beer temp: %.2fC\n", beerTemp);
+    Serial.printf("Ambient temp: %.2fC\n", ambientTemp);
+
+    lcd.home();
+    lcd.printf("Beer:    %.2f", beerTemp);
+    lcd.setCursor(0, 1);
+    lcd.printf("Ambient: %.2f", ambientTemp);
 }
